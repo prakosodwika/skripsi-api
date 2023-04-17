@@ -192,6 +192,7 @@ router.post("/postVerifikasi", authToken, (req, res) => {
     });
   }
 });
+
 // updatepassword
 // router.post("/updatePasswordByIdToken", authToken, (res, req) => {
 //   const data = {
@@ -211,14 +212,35 @@ router.post("/postVerifikasi", authToken, (req, res) => {
 
 // });
 
-// upload gambar
-// edit gambar
-// upload qr
-// edit stattus
-// router.post("/updateStatusRestoranByAdmin", authToken, (res, req) => {
-//   const data = {
-//     status: "Terverifikasi"
+// // fungsi multer upload
+// var storage = multer.diskStorage({
+//   destination: (req, file, callback) => {
+//     callback(null, "image/menu");
+//   },
+//   filename: (req, file, callback) => {
+//     callback(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
+//   },
+// });
+// var upload = multer({ storage: storage }).single("image");
+// router.post("/uploadMenu", upload, (req, res) => {
+//   return res.status(200).json({ message: "success" });
+// });
+
+// router.post("/updateMenu", (req, res) => {
+//   try {
+//     const file = `image/menu/${req.body.namaFile}`;
+
+//     fs.unlinkSync(file);
+//   } catch (error) {
+//     console.log("error : ", error);
+//     return res.status(500).json({ error: error });
 //   }
-// })
+
+//   if (fs.readFileSync(file)) {
+//     return res.status(200).json({ message: "failed" });
+//   } else {
+//     return res.status(200).json({ message: "success" });
+//   }
+// });
 
 module.exports = router;

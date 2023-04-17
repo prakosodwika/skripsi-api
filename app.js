@@ -14,6 +14,7 @@ var admin = require("./routes/admin");
 var qr = require("./routes/qr");
 var patterns = require("./routes/patterns");
 var transaksi = require("./routes/transaksi");
+var common = require("./routes/common");
 
 var app = express();
 app.use(cors({ origin: "*" }));
@@ -33,5 +34,6 @@ app.use("/admin", admin);
 app.use("/qr", qr);
 app.use("/patterns", patterns);
 app.use("/transaksi", transaksi);
+app.use("/common", common);
 
 module.exports = app;
