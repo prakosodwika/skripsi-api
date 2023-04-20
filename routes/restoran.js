@@ -94,7 +94,7 @@ router.get("/", authToken, (req, res) => {
   if (req.user.role != "admin") {
     return res.status(403).json({ error: "Unauthorized" });
   } else {
-    con.query("select idRestoran, nama, alamat, nomorTelepon, email, jumlahMeja, status from tbrestoran", (err, result, field) => {
+    con.query("select idRestoran, nama, alamat, nomorTelepon, email, jumlahMeja, status, qrchatbot from tbrestoran", (err, result, field) => {
       if (err) {
         console.log("error : ", err);
         return res.status(500).json({ error: err });
@@ -172,10 +172,10 @@ router.post("/updateRestoranByIdToken", authToken, (req, res) => {
 
 router.post("/postVerifikasi", authToken, (req, res) => {
   const data = {
-    status: "terverifikasi",
+    status: req.body.status,
     id: req.body.idRestoran,
   };
-  const { valid, _errors } = ValidateId(data);
+  const { valid, _errors } = ValidateStatus(data);
   if (!valid) return res.status(400).json({ error: _errors });
   if (req.user.role != "admin") {
     return res.status(403).json({ error: "Unauthorized" });
@@ -193,54 +193,39 @@ router.post("/postVerifikasi", authToken, (req, res) => {
   }
 });
 
-// updatepassword
-// router.post("/updatePasswordByIdToken", authToken, (res, req) => {
-//   const data = {
-//     passwordLama: req.body.passwordLama,
-//     passwordBaru: req.body.passwordBaru,
-//     konfirmasiPasswordBaru: req.body.konfirmasiPasswordBaru
-//   };
-
-//   const {valid, _errors} = ValidateUpdatePasswordByIdToken(data)
-//   if (!valid) return res.status(400).json({errors: _errors})
-//   if (req.user.role != "operator") {
-//     return res.status(403).json({error: "Unauthorized"})
-//     // error ngelu
-//   } else if (){
-//     con.query
-//   }
-
-// });
-
-// // fungsi multer upload
-// var storage = multer.diskStorage({
-//   destination: (req, file, callback) => {
-//     callback(null, "image/menu");
-//   },
-//   filename: (req, file, callback) => {
-//     callback(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
-//   },
-// });
-// var upload = multer({ storage: storage }).single("image");
-// router.post("/uploadMenu", upload, (req, res) => {
-//   return res.status(200).json({ message: "success" });
-// });
-
-// router.post("/updateMenu", (req, res) => {
-//   try {
-//     const file = `image/menu/${req.body.namaFile}`;
-
-//     fs.unlinkSync(file);
-//   } catch (error) {
-//     console.log("error : ", error);
-//     return res.status(500).json({ error: error });
-//   }
-
-//   if (fs.readFileSync(file)) {
-//     return res.status(200).json({ message: "failed" });
-//   } else {
-//     return res.status(200).json({ message: "success" });
-//   }
-// });
+router.post("/ubahPassword", authToken, (req, res) => {
+  const data = {
+    passwordLama: req.body.passwordLama,
+    passwordBaru: req.body.passwordBaru,
+    konfirmasiPasswordBaru: req.body.konfirmasiPasswordBaru,
+  };
+  const { valid, _errors } = ValidateUpdatePasswordByIdToken(data);
+  if (!valid) return res.status(400).json({ error: _errors });
+  if (req.user.role != "operator") {
+    return res.status(403).json({ error: "Unauthorized" });
+  } else {
+    con.query(`SELECT * FROM tbrestoran WHERE idRestoran = ${req.user.id}`, (err, result, field) => {
+      if (err) {
+        console.log("error : ", err);
+        return res.status(500).json({ error: err });
+      } else if (DecryptPassword(data.passwordLama, result[0].password)) {
+        const hashedPassword = HashPassword(data.passwordBaru);
+        con.query(`UPDATE tbrestoran SET password = "${hashedPassword}" WHERE idRestoran = ${req.user.id}`, (err, result, field) => {
+          if (err) {
+            console.log("error : ", err);
+            return res.status(500).json({ error: err });
+          }
+          return res.status(200).json({ data: { message: "Edit password success" } });
+        });
+      } else {
+        return res.status(400).json({
+          error: {
+            passwordLama: "Password lama salah",
+          },
+        });
+      }
+    });
+  }
+});
 
 module.exports = router;

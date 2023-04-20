@@ -29,42 +29,63 @@ var upload = multer({
   limits: { fileSize: 1 * 1024 * 1024 }, // 1mb
 }).single("image");
 
+const post = (file, lokasi, id, res) => {
+  con.query(`UPDATE tbrestoran SET ${lokasi} = "${file}", tanggalUbah = '${new Date().toISOString().slice(0, 19).replace("T", " ")}'WHERE idRestoran = ${id}`, (err, result, field) => {
+    if (err) {
+      console.log("error : ", err);
+      return res.status(500).json({ error: err });
+    }
+    if (file.length == 0) {
+      return res.status(200).json({
+        data: {
+          message: "Delete image success",
+        },
+      });
+    } else {
+      return res.status(200).json({
+        data: {
+          message: "Upload image success",
+        },
+      });
+    }
+  });
+};
+
 router.post("/upload", authToken, (req, res) => {
-  console.log("test");
   upload(req, res, function (err) {
     if (err instanceof multer.MulterError) {
       return res.status(400).json({ error: err });
     } else if (err) {
       return res.status(400).json({ error: err });
     }
-    if (req.body.lokasi == "menu") {
-      con.query(
-        `UPDATE tbrestoran SET fotoMenu = '${req.file.filename}' WHERE idRestoran = ${req.user.id};
-      `,
-        (err, result, field) => {
-          if (err) {
-            console.log("error : ", err);
-            return res.status(500).json({ error: err });
-          }
-          return res.status(200).json({ data: "Upload gambar menu success" });
-        }
-      );
-    } else if (req.body.lokasi == "qr") {
-      con.query(
-        `UPDATE tbrestoran SET qrchatbot = '${req.file.filename}' WHERE idRestoran = ${req.user.id};
-      `,
-        (err, result, field) => {
-          if (err) {
-            console.log("error : ", err);
-            return res.status(500).json({ error: err });
-          }
-          return res.status(200).json({ data: "Upload gambar qr chat bot success" });
-        }
-      );
-    } else {
-      fs.unlinkSync(file);
-      return res.status(500).json({ error: "Upload gagal" });
+
+    if (req.user.role == "operator") {
+      if (req.user.id != req.body.idRestoran && req.body.lokasi != "menu") return res.status(403).json({ error: "Unauthorized" });
+    } else if (req.user.role == "admin") {
+      if (req.body.lokasi != "qr") return res.status(403).json({ error: "Unauthorized" });
     }
+
+    const lokasi = req.body.lokasi == "menu" ? "fotoMenu" : req.body.lokasi == "qr" ? "qrchatbot" : "error";
+    post(req.file.filename, lokasi, req.body.idRestoran, res);
+  });
+});
+
+router.post("/delete", authToken, (req, res) => {
+  const oldImage = `image/${req.body.oldImage}`;
+  const idRestoran = req.body.idRestoran;
+  const lokasi = req.body.lokasi == "menu" ? "fotoMenu" : req.body.lokasi == "qr" ? "qrchatbot" : "error";
+
+  if (req.user.role == "operator") {
+    if (req.user.id != req.body.idRestoran && req.body.lokasi != "menu") return res.status(403).json({ error: "Unauthorized" });
+  } else if (req.user.role == "admin") {
+    if (req.body.lokasi != "qr") return res.status(403).json({ error: "Unauthorized" });
+  }
+
+  // // delete
+  fs.unlink(oldImage, (err) => {
+    // jika gagal delete
+    if (err) return res.status(400).json({ error: err });
+    post("", lokasi, idRestoran, res);
   });
 });
 
