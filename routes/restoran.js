@@ -89,7 +89,7 @@ router.post("/login", (req, res) => {
   });
 });
 
-// getAll restoran
+// getAll restoran (admin)
 router.get("/", authToken, (req, res) => {
   if (req.user.role != "admin") {
     return res.status(403).json({ error: "Unauthorized" });
@@ -104,6 +104,7 @@ router.get("/", authToken, (req, res) => {
   }
 });
 
+// get 1 data restoran by id restoran (admin)
 router.post("/getRestoranByIdRestoran", authToken, (req, res) => {
   const data = {
     id: req.body.idRestoran,
@@ -123,7 +124,7 @@ router.post("/getRestoranByIdRestoran", authToken, (req, res) => {
   }
 });
 
-// getRestoran by id in token
+// getRestoran by id token
 router.get("/getRestoranByIdToken", authToken, (req, res) => {
   if (req.user.role != "operator") {
     return res.status(403).json({ error: "Unauthorized" });
@@ -193,6 +194,7 @@ router.post("/postVerifikasi", authToken, (req, res) => {
   }
 });
 
+// ubah password acc restoran
 router.post("/ubahPassword", authToken, (req, res) => {
   const data = {
     passwordLama: req.body.passwordLama,

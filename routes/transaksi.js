@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const con = require("../util/config");
 const authToken = require("../util/authToken");
-const { ValidatePostTransaksi, ValidateId, ValidateStatus, ValidateEditTransaksi, ValidatePesanan } = require("../util/validators");
+const { ValidatePostTransaksi, ValidateId, ValidateStatus, ValidateEditTransaksi } = require("../util/validators");
 const { restart } = require("nodemon");
 
 // router.get("/getTransaksi", authToken, (req, res) => {
@@ -42,6 +42,7 @@ router.post("/getDetailTransaksi", authToken, (req, res) => {
   }
 });
 
+// get all transaksi
 router.get("/getTransaksi", authToken, (req, res) => {
   if (req.user.role != "operator") {
     return res.status(403).json({ error: "Unauthorized" });
@@ -83,44 +84,6 @@ router.post("/postStatus", authToken, (req, res) => {
   }
 });
 
-// ulang
-// router.post("/postTransaksi", async (req, res) => {
-//   try {
-//     const data = {
-//       username: req.body.username,
-//       nomorMeja: req.body.nomorMeja,
-//       namaRestoran: req.body.namaRestoran,
-//       tanggalBuat: new Date().toISOString().slice(0, 19).replace("T", " "),
-//       status: "belum terbayar",
-//       pesanan: req.body.pesanan,
-//     };
-//     const { valid, _errors } = await ValidatePostTransaksi(data);
-//     if (!valid) return res.status(400).json({ error: _errors });
-//     let pesanan = [];
-//     await data.pesanan.forEach((pesan) => {
-//       const dataPesanan = {
-//         nama: pesan[0],
-//         qty: pesan[1],
-//       };
-//       const { valid, _errors } = ValidatePesanan(data);
-//       if (!valid) return res.status(400).json({ _errors });
-//       con.query(`SELECT * FROM tbmenu WHERE nama = '${dataPesanan.nama}'`, (err, result) => {
-//         if (err) {
-//           return res.status(500).json({ error: err });
-//         }
-//         pesanan.push({
-//           idMenu: result.idMenu,
-//           idMenu: result.idMenu,
-//           idMenu: result.idMenu,
-//         });
-//       });
-//     });
-//     return res.status(200).json({ message: "oke" });
-//   } catch (error) {
-//     console.log(error);
-//   }
-// });
-
 // diskusi dengan waliyin
 router.post("/editTransaksi", (req, res) => {
   const data = {
@@ -135,6 +98,79 @@ router.post("/editTransaksi", (req, res) => {
     }
     console.log("result : ", result);
     return res.status(200).json({ message: "success" });
+  });
+});
+
+// post pesanan
+router.post("/pesan", (req, res) => {
+  const data = {
+    username: req.body.username,
+    nomorMeja: req.body.nomorMeja,
+    tanggalBuat: new Date().toISOString().slice(0, 19).replace("T", " "),
+    status: "belum bayar",
+    namaRestoran: req.body.namaRestoran,
+    pesanan: req.body.pesanan,
+  };
+
+  const { valid, _errors } = ValidatePostTransaksi(data);
+  if (!valid) return res.status(400).json({ error: _errors });
+  con.query(`SELECT idRestoran FROM tbrestoran WHERE nama = '${data.namaRestoran}'`, (err, result, field) => {
+    if (err) {
+      return res.status(500).json({ error: err });
+    } else if (result.length == 0) {
+      return res.status(404).json({ error: "data not found" });
+    } else if (result.length > 1) {
+      return res.status(400).json({ error: "nama restoran kurang detail" });
+    } else {
+      const idRestoran = result[0].idRestoran;
+      const pesanan = [];
+      const namaMenu = [];
+      const qty = [];
+      data.pesanan.forEach((menu) => {
+        pesanan.push([menu[0], idRestoran]);
+        namaMenu.push(menu[0]);
+        qty.push(menu[1]);
+      });
+      con.query(`SELECT idMenu, harga FROM tbmenu WHERE (nama, idRestoran) IN (?) ORDER BY FIELD(nama, ?) `, [pesanan, namaMenu], (err, result, field) => {
+        const dataMenu = result;
+        // data post detail transaksi
+        const detailPesanan = [];
+        if (err) {
+          return res.status(500).json({ error: err });
+        } else if (result.length == 0) {
+          return res.status(404).json({ error: "data not found" });
+        } else if (result.length != pesanan.length) {
+          return res.status(400).json({ error: "ada typo dalam menu" });
+        } else {
+          dataMenu.forEach((menu, index) => {
+            menu.qty = qty[index];
+            detailPesanan.push(Object.values(menu));
+          });
+          // insert and get idTransaksi
+          con.query(`INSERT INTO tbtransaksi (username, nomorMeja, tanggalBuat, status, idRestoran) VALUES ('${data.username}','${data.nomorMeja}', '${data.tanggalBuat}', '${data.status}','${idRestoran}')`, (err, result, field) => {
+            if (err) {
+              return res.status(500).json({ error: err });
+            } else {
+              const idDetail = result.insertId;
+              detailPesanan.forEach((detail) => {
+                detail.unshift(idDetail);
+              });
+              con.query(`INSERT INTO tbdetailtransaksi (idTransaksi, idMenu, harga, qty) VALUE ?`, [detailPesanan], (err, result, field) => {
+                if (err) {
+                  return res.status(500).json({ error: err });
+                } else {
+                  return res.status(200).json({
+                    data: {
+                      message: "pemesanan success",
+                    },
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
+    }
   });
 });
 

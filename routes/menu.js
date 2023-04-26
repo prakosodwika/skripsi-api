@@ -102,6 +102,7 @@ router.post("/getMenuByIdMenu", authToken, (req, res) => {
   }
 });
 
+// get all menu
 router.get("/getAllMenuByIdToken", authToken, (req, res) => {
   if (req.user.role != "operator") {
     return res.status(403).json({ error: "Unauthorized" });
@@ -118,6 +119,7 @@ router.get("/getAllMenuByIdToken", authToken, (req, res) => {
   }
 });
 
+// delete data menu
 router.post("/deleteMenuByIdMenu", authToken, (req, res) => {
   const data = {
     id: req.body.idMenu,

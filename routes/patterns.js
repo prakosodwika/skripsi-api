@@ -144,7 +144,7 @@ router.get("/getDetailTag", authToken, (req, res) => {
   });
 });
 
-router.get("/xIntents", authToken, (req, res) => {
+router.get("/intents", (req, res) => {
   let data = [];
   con.query(`SELECT * FROM tbpatterns `, (err, result, field) => {
     if (err) {
