@@ -144,8 +144,14 @@ router.get("/getDetailTag", authToken, (req, res) => {
   });
 });
 
+// get intents by idRestoran
 router.get("/intents", (req, res) => {
-  let data = [];
+  const data = {
+    id: req.body.idRestoran,
+  };
+  const { valid, _errors } = ValidateId(data);
+  if (!valid) return res.status(400).json({ error: _errors });
+  let intents = [];
   con.query(`SELECT * FROM tbpatterns `, (err, result, field) => {
     if (err) {
       return res.status(500).json({ error: err });
@@ -170,13 +176,30 @@ router.get("/intents", (req, res) => {
             }
           }
         });
-        data.push({
+        intents.push({
           tag: tag.tag,
           patterns: dataPatterns,
           response: dataResponse,
         });
       });
-      return res.status(200).json({ data });
+
+      con.query(`SELECT * FROM tbmenu WHERE idRestoran = ${data.id}`, (err, result, field) => {
+        if (err) {
+          return res.status(500).json({ error: err });
+        }
+        const namaMenu = [];
+        const menus = result;
+
+        menus.forEach((menu) => {
+          namaMenu.push(menu.nama);
+        });
+        intents.push({
+          tag: "menu",
+          patterns: namaMenu,
+          response: ["menu tersebut ada ya kak"],
+        });
+        return res.status(200).json({ intents });
+      });
     });
   });
 });
@@ -237,31 +260,32 @@ router.post("/deleteTag", authToken, (req, res) => {
             });
           }
         });
-      }
-      // get id detail untuk delete
-      const DetailPatterns = result;
-      DetailPatterns.forEach((idDetailPatterns) => {
-        con.query(`DELETE FROM tbdetailpatterns WHERE idDetailPatterns = ${idDetailPatterns.idDetailPatterns}`, (err) => {
+      } else {
+        // get id detail untuk delete
+        const DetailPatterns = result;
+        DetailPatterns.forEach((idDetailPatterns) => {
+          con.query(`DELETE FROM tbdetailpatterns WHERE idDetailPatterns = ${idDetailPatterns.idDetailPatterns}`, (err) => {
+            if (err) {
+              console.log("error 2 : ", err);
+              return res.status(500).json({ error: err });
+            }
+          });
+        });
+        con.query(`DELETE FROM tbpatterns WHERE idPatterns = ${data.id}`, (err, result, field) => {
           if (err) {
             console.log("error 2 : ", err);
             return res.status(500).json({ error: err });
+          } else if (result.affectedRows == 0) {
+            return res.status(404).json({ error: "data not found" });
+          } else {
+            return res.status(200).json({
+              data: {
+                message: "Delete success",
+              },
+            });
           }
         });
-      });
-      con.query(`DELETE FROM tbpatterns WHERE idPatterns = ${data.id}`, (err, result, field) => {
-        if (err) {
-          console.log("error 2 : ", err);
-          return res.status(500).json({ error: err });
-        } else if (result.affectedRows == 0) {
-          return res.status(404).json({ error: "data not found" });
-        } else {
-          return res.status(200).json({
-            data: {
-              message: "Delete success",
-            },
-          });
-        }
-      });
+      }
     });
   }
 });

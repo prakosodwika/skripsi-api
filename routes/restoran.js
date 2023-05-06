@@ -6,7 +6,7 @@ const authToken = require("../util/authToken");
 const { HashPassword, DecryptPassword } = require("../util/hash");
 const { ValidateLogin, ValidateRegistrasi, ValidateUpdateRestoranByIdToken, ValidateId, ValidateUpdatePasswordByIdToken, ValidateStatus } = require("../util/validators");
 
-// registrasi
+// registrasi done
 router.post("/registrasi", (req, res) => {
   const data = {
     nama: req.body.nama,
@@ -38,6 +38,8 @@ router.post("/registrasi", (req, res) => {
           } else {
             return res.status(400).json({ error: "Email telah digunakan" });
           }
+        } else if (err.code === "ER_DATA_TOO_LONG") {
+          return res.status(400).json({ error: "Alamat terlalu panjang" });
         }
         return res.status(500).json({ error: err });
       }
@@ -94,7 +96,7 @@ router.get("/", authToken, (req, res) => {
   if (req.user.role != "admin") {
     return res.status(403).json({ error: "Unauthorized" });
   } else {
-    con.query("select idRestoran, nama, alamat, nomorTelepon, email, jumlahMeja, status, qrchatbot from tbrestoran", (err, result, field) => {
+    con.query("select idRestoran, nama, alamat, nomorTelepon, email, jumlahMeja, status, qrchatbot, fotoMenu from tbrestoran", (err, result, field) => {
       if (err) {
         console.log("error : ", err);
         return res.status(500).json({ error: err });
@@ -229,5 +231,28 @@ router.post("/ubahPassword", authToken, (req, res) => {
     });
   }
 });
+
+// belom di tes walibin
+router.get("/image", (req, res) => {
+  const data = {
+    id: req.body.idRestoran,
+  };
+  const { valid, _errors } = ValidateId(data);
+  if (!valid) {
+    return res.status(400).json({ error: _errors });
+  } else {
+    con.query(`SELECT fotoMenu FROM tbrestoran WHERE idRestoran = ${data.id}`, (err, result, field) => {
+      if (err) {
+        return res.status(500).json({ error: err });
+      } else if (result.length == 0) {
+        return res.status(404).json({ error: "data not found" });
+      } else {
+        return res.status(200).json({ data: "../../../skripsi-api/image/" + result[0].fotoMenu });
+      }
+    });
+  }
+});
+
+// hapus akun
 
 module.exports = router;

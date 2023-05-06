@@ -102,6 +102,24 @@ router.post("/getMenuByIdMenu", authToken, (req, res) => {
   }
 });
 
+// get menu by idRestoran + token admin
+router.post("/getAllMenuIdRestoran", (req, res) => {
+  const data = {
+    id: req.body.idRestoran,
+  };
+  const { valid, _errors } = ValidateId(data);
+  if (!valid) return res.status(400).json({ error: _errors });
+  con.query(`SELECT * FROM tbmenu WHERE idRestoran = "${data.id}"`, (err, result, field) => {
+    if (err) {
+      return res.status(500).json({ error: err });
+    } else if (result.length == 0) {
+      return res.status(404).json({ error: "data not found" });
+    } else {
+      return res.status(200).json({ data: result });
+    }
+  });
+});
+
 // get all menu
 router.get("/getAllMenuByIdToken", authToken, (req, res) => {
   if (req.user.role != "operator") {

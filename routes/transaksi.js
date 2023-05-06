@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const con = require("../util/config");
 const authToken = require("../util/authToken");
-const { ValidatePostTransaksi, ValidateId, ValidateStatus, ValidateEditTransaksi } = require("../util/validators");
+const { ValidatePostTransaksi, ValidateId, ValidateStatus, ValidateEditTransaksi, ValidateCancelTransaksi, ValidatePostPesanan, ValidatePostMenuPesanan } = require("../util/validators");
 const { restart } = require("nodemon");
 
 // router.get("/getTransaksi", authToken, (req, res) => {
@@ -18,28 +18,24 @@ const { restart } = require("nodemon");
 //   }
 // });
 
-// salah database karena tidak ada iddetailtransaksi
-router.post("/getDetailTransaksi", authToken, (req, res) => {
+// getDetailTransaksi
+router.post("/getDetailTransaksi", (req, res) => {
   const data = {
     id: req.body.idTransaksi,
   };
   const { valid, _errors } = ValidateId(data);
   if (!valid) return res.status(400).json({ error: _errors });
-  if (req.user.role != "operator") {
-    return res.status(403).json({ error: "Unauthorized" });
-  } else {
-    let total = 0;
-    con.query(`SELECT m.nama, dt.qty, dt.harga FROM tbdetailtransaksi dt JOIN tbmenu m ON dt.idMenu = m.idMenu WHERE idTransaksi = "${data.id}";`, (err, result, field) => {
-      if (err) {
-        return res.status(500).json({ error: err });
-      }
-      result.forEach((data) => {
-        total += data.harga * data.qty;
-      });
-
-      return res.status(200).json({ data: result, total: total });
+  let total = 0;
+  con.query(`SELECT m.idMenu, m.nama, dt.qty, dt.harga, dt.qty*dt.harga as subHarga  FROM tbdetailtransaksi dt JOIN tbmenu m ON dt.idMenu = m.idMenu WHERE idTransaksi = "${data.id}";`, (err, result, field) => {
+    if (err) {
+      return res.status(500).json({ error: err });
+    }
+    result.forEach((data) => {
+      total += data.harga * data.qty;
     });
-  }
+
+    return res.status(200).json({ data: result, total: total });
+  });
 });
 
 // get all transaksi
@@ -59,45 +55,91 @@ router.get("/getTransaksi", authToken, (req, res) => {
   }
 });
 
-router.post("/postStatus", authToken, (req, res) => {
+// post transaksi 1 1
+router.post("/postTransaksi", (req, res) => {
   const data = {
-    status: "lunas",
-    // tanggalbayar
-    id: req.body.idTransaksi,
-    tanggalBayar: new Date().toISOString().slice(0, 19).replace("T", " "),
+    username: req.body.username,
+    nomorMeja: req.body.nomorMeja,
+    tanggalBuat: new Date().toISOString().slice(0, 19).replace("T", " "),
+    status: "belum bayar",
+    idRestoran: req.body.idRestoran,
   };
-  const { valid, _errors } = ValidateStatus(data);
-  if (!valid) return res.status(400).json({ error: _errors });
-  if (req.user.role != "operator") {
-    return res.status(403).json({ error: "Unauthorized" });
+  const { valid, _errors } = ValidatePostPesanan(data);
+  if (!valid) {
+    return res.status(400).json({ error: _errors });
   } else {
-    con.query(`UPDATE tbtransaksi SET status = '${data.status}', tanggalBayar = '${data.tanggalBayar}' WHERE idTransaksi = '${data.id}'`, (err, result, field) => {
+    con.query(`INSERT INTO tbtransaksi (username, nomorMeja, tanggalBuat, status, idRestoran) VALUES ('${data.username}','${data.nomorMeja}', '${data.tanggalBuat}', '${data.status}','${data.idRestoran}')`, (err, result, field) => {
       if (err) {
         return res.status(500).json({ error: err });
       }
-      return res.status(200).json({
-        data: {
-          message: "Update status success",
-        },
-      });
+      return res.status(200).json({ data: { idTransaksi: result.insertId } });
     });
   }
 });
 
-// diskusi dengan waliyin
-router.post("/editTransaksi", (req, res) => {
+// post pesanan
+router.post("/postPesanan", (req, res) => {
   const data = {
-    id: req.body.idTransaksi,
-    pesanan: req.body.pesanan,
+    idTransaksi: req.body.idTransaksi,
+    idMenu: req.body.idMenu,
+    qty: req.body.qty,
   };
-  const { valid, _errors } = ValidateEditTransaksi(data);
-  if (!valid) return res.status(400).json({ errors: _errors });
-  con.query(`SELECT * FROM tbtransaksi WHERE idTransaksi = "${data.id}"`, (err, result, field) => {
+  const { valid, _errors } = ValidatePostMenuPesanan(data);
+  if (!valid) return res.status(400).json({ error: _errors });
+  con.query(`SELECT harga FROM tbmenu WHERE idMenu = ${data.idMenu}`, (err, result, field) => {
     if (err) {
       return res.status(500).json({ error: err });
+    } else if (result.length == 0) {
+      return res.status(404).json({ error: "data not found" });
+    } else {
+      const harga = result[0].harga;
+      con.query(`INSERT INTO tbdetailtransaksi (idTransaksi, idMenu, qty, harga) VALUE ('${data.idTransaksi}','${data.idMenu}','${data.qty}','${harga}')`, (err, result, field) => {
+        if (err) {
+          return res.status(500).json({ error: err });
+        }
+        return res.status(200).json({
+          data: {
+            message: "upload success",
+          },
+        });
+      });
     }
-    console.log("result : ", result);
-    return res.status(200).json({ message: "success" });
+  });
+});
+
+// belom di tes balibur
+router.post("/editPesanan", (req, res) => {
+  const data = {
+    idTransaksi: req.body.idTransaksi,
+    idDetailTransaksi: req.body.idDetailTransaksi,
+    idMenu: req.body.idMenu,
+    qty: req.body.qty,
+  };
+  const { valid, _errors } = ValidateEditTransaksi(data);
+  if (!valid) return res.status(400).json({ error: _errors });
+  con.query(`SELECT * FROM tbmenu WHERE idMenu = ${data.idMenu}`, (err, result, field) => {
+    if (err) {
+      return res.status(500).json({ error: err });
+    } else if (result.length == 0) {
+      console.log("result : ", result);
+      return res.status(404).json({ error: "data not found" });
+    } else {
+      const harga = result[0].harga;
+      con.query(`UPDATE tbdetailtransaksi SET idMenu = ${data.idMenu} , qty = ${data.qty} , harga = ${harga} WHERE idTransaksi = ${data.idTransaksi} AND idDetailTransaksi = ${data.idDetailTransaksi}`, (err, result, field) => {
+        if (err) {
+          return res.status(500).json({ error: err });
+        } else if (result.length == 0) {
+          console.log("result : ", result);
+          return res.status(404).json({ error: "data tidak ada" });
+        } else {
+          return res.status(200).json({
+            data: {
+              message: "Update detail transaksi success ",
+            },
+          });
+        }
+      });
+    }
   });
 });
 
@@ -174,4 +216,60 @@ router.post("/pesan", (req, res) => {
   });
 });
 
+// cancel
+router.post("/cancel", (req, res) => {
+  const data = {
+    idTransaksi: req.body.idTransaksi,
+    username: req.body.username,
+  };
+  const { valid, _errors } = ValidateCancelTransaksi(data);
+  if (!valid) return res.status(400).json({ error: _errors });
+  con.query(`SELECT status FROM tbtransaksi WHERE idTransaksi = ${data.idTransaksi} AND username = '${data.username}'`, (err, result, field) => {
+    if (err) {
+      return res.status(500).json({ error: err });
+    } else if (result.length == 0) {
+      return res.status(404).json({ error: "data not found" });
+    } else if (result[0].status == "lunas") {
+      return res.status(200).json({ data: { message: "pesanan tidak bisa di cancel" } });
+    } else {
+      con.query(`SELECT idDetailTransaksi FROM tbdetailtransaksi WHERE idTransaksi = ${data.idTransaksi}`, (err, result, field) => {
+        if (err) {
+          return res.status(500).json({ error: err });
+        } else if (result.length == 0) {
+          con.query(`DELETE FROM tbtransaksi WHERE idTransaksi = ${data.idTransaksi}`, (err, result, field) => {
+            if (err) {
+              return res.status(500).json({ error: err });
+            } else if (result.affectedRows == 0) {
+              return res.status(404).json({ error: "data not found" });
+            } else {
+              return res.status(200).json({ data: { message: "Delete success" } });
+            }
+          });
+        } else {
+          const DetailTransaksi = result;
+          DetailTransaksi.forEach((idDetailTransaksi) => {
+            con.query(`DELETE FROM tbdetailtransaksi WHERE idDetailTransaksi = ${idDetailTransaksi.idDetailTransaksi}`, (err, result, field) => {
+              if (err) {
+                return res.status(500).json({ error: err });
+              }
+            });
+          });
+          con.query(`DELETE FROM tbtransaksi WHERE idTransaksi = ${data.idTransaksi}`, (err, result, field) => {
+            if (err) {
+              return res.status(500).json({ error: err });
+            } else if (result.affectedRows == 0) {
+              return res.status(404).json({ error: "data not found" });
+            } else {
+              return res.status(200).json({
+                data: {
+                  message: "Delete success",
+                },
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+});
 module.exports = router;

@@ -160,6 +160,28 @@ ValidatePostTransaksi = (data) => {
   };
 };
 
+ValidatePostPesanan = (data) => {
+  let _errors = {};
+  if (isEmpty(data.username)) _errors.username = "Username harus terisi";
+  if (!isNumber(data.nomorMeja)) _errors.nomorMeja = "Nomor meja harus angka";
+  if (!isNumber(data.idRestoran)) _errors.idRestoran = "id restoran tidak boleh kosong";
+  return {
+    _errors,
+    valid: Object.keys(_errors).length === 0 ? true : false,
+  };
+};
+
+ValidatePostMenuPesanan = (data) => {
+  let _errors = {};
+  if (!isNumber(data.idTransaksi)) _errors.idTransaksi = "id transaksi harus angka";
+  if (!isNumber(data.idMenu)) _errors.idMenu = "id menuharus angka";
+  if (!isNumber(data.qty)) _errors.qty = "qty harus angka";
+  return {
+    _errors,
+    valid: Object.keys(_errors).length === 0 ? true : false,
+  };
+};
+
 ValidatePesanan = (data) => {
   let _errors = {};
   if (isEmpty(data.nama)) _errors.nama = "nama pesanan tidak boleh kosong dan harus di array 0";
@@ -172,8 +194,10 @@ ValidatePesanan = (data) => {
 
 ValidateEditTransaksi = (data) => {
   let _errors = {};
-  if (!isNumber(data.id)) _errors.id = "Id harus terisi dan angka";
-  if (!Array.isArray(data.pesanan) || data.pesanan.length == 0) _errors.pesanan = "harus terisi dan array";
+  if (!isNumber(data.idTransaksi)) _errors.idTransaksi = "Id harus terisi dan angka";
+  if (!isNumber(data.idDetailTransaksi)) _errors.idDetailTransaksi = "Id harus terisi dan angka";
+  if (!isNumber(data.idMenu)) _errors.idMenu = "Id harus terisi dan angka";
+  if (!isNumber(data.qty)) _errors.qty = "Id harus terisi dan angka";
   return {
     _errors,
     valid: Object.keys(_errors).length === 0 ? true : false,
@@ -201,6 +225,16 @@ ValidateUpdatePatternsResponse = (data) => {
   };
 };
 
+ValidateCancelTransaksi = (data) => {
+  let _errors = {};
+  if (!isNumber(data.idTransaksi)) _errors.idTransaksi = "Id tidak kosong & angka";
+  if (isEmpty(data.username)) _errors.username = "Username tidak boleh kosong";
+  return {
+    _errors,
+    valid: Object.keys(_errors).length === 0 ? true : false,
+  };
+};
+
 module.exports = {
   ValidateLogin,
   ValidateRegistrasi,
@@ -214,9 +248,12 @@ module.exports = {
   ValidatePostPatternsResponse,
   ValidateDeletePatternsRasponse,
   ValidateStatus,
+  ValidatePostPesanan,
+  ValidatePostMenuPesanan,
   ValidatePostTransaksi,
   ValidateEditTransaksi,
   ValidateUpdateTag,
   ValidateUpdatePatternsResponse,
   ValidatePesanan,
+  ValidateCancelTransaksi,
 };
