@@ -1,5 +1,3 @@
-const { error } = require("firebase-functions/logger");
-
 const isEmpty = (data) => {
   if (typeof data !== "string") return true;
   if (data.trim() === "") return true;
