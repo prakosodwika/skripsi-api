@@ -6,6 +6,8 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
+// aws s3
+
 // multer
 var storage = multer.diskStorage({
   destination: (req, file, callback) => {
