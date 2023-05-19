@@ -3,8 +3,9 @@ const router = express.Router();
 const con = require("../util/config");
 const jwt = require("jsonwebtoken");
 const authToken = require("../util/authToken");
+const fs = require("fs");
 const { HashPassword, DecryptPassword } = require("../util/hash");
-const { ValidateLogin, ValidateRegistrasi, ValidateUpdateRestoranByIdToken, ValidateId, ValidateUpdatePasswordByIdToken, ValidateStatus } = require("../util/validators");
+const { ValidateLogin, ValidateRegistrasi, ValidateUpdateRestoranByIdToken, ValidateId, ValidateUpdatePasswordByIdToken, ValidateStatus, ValidateDeleteAkun } = require("../util/validators");
 
 // registrasi done
 router.post("/registrasi", (req, res) => {
@@ -254,5 +255,96 @@ router.get("/image", (req, res) => {
 });
 
 // hapus akun
+router.post("/delete", authToken, (req, res) => {
+  const data = {
+    idRestoran: req.body.idRestoran,
+    password: req.body.password,
+  };
+  const { valid, _errors } = ValidateDeleteAkun(data);
+  if (!valid) return res.status(400).json({ error: _errors });
+  if (req.user.id != data.idRestoran) {
+    return res.status(403).json({ error: "Unauthorized" });
+  } else {
+    con.query(`SELECT * FROM tbrestoran WHERE idRestoran = "${data.idRestoran}"`, (err, result, field) => {
+      if (err) {
+        return res.status(500).json({ error: err });
+      } else if (DecryptPassword(data.password, result[0].password)) {
+        // cek data transaksi dan detail transaksi
+        con.query(`SELECT idTransaksi FROM tbtransaksi WHERE idRestoran = ${req.user.id}`, (err, result, field) => {
+          if (err) {
+            return res.status(500).json({ error: err });
+          } else if (result.length != 0) {
+            const DetailTransaksi = result;
+            DetailTransaksi.forEach((data) => {
+              // delete detail transaksi
+              con.query(`DELETE FROM tbdetailtransaksi WHERE idTransaksi = ${data.idTransaksi}`, (err, result, field) => {
+                if (err) {
+                  return res.status(500).json({ error: err });
+                }
+              });
+              // delete transaksi
+              con.query(`DELETE FROM tbtransaksi WHERE idTransaksi = ${data.idTransaksi}`, (err, result, field) => {
+                if (err) {
+                  return res.status(500).json({ error: err });
+                }
+              });
+            });
+          }
+          // delete data menu
+          con.query(`DELETE FROM tbmenu WHERE idRestoran = ${data.idRestoran}`, (err, result, field) => {
+            if (err) {
+              return res.status(500).json({ error: err });
+            }
+            con.query(`SELECT fotoMenu, qrchatbot FROM tbRestoran WHERE idRestoran =${req.user.id}`, (err, result, field) => {
+              if (err) {
+                return res.status(500).json({ error: err });
+              }
+
+              result.forEach((data) => {
+                if (data.fotoMenu != null && data.fotoMenu !== "") {
+                  fs.unlink(`image/${data.fotoMenu}`, (err) => {
+                    if (err) return res.status(400).json({ error: err });
+                    con.query(`UPDATE tbrestoran SET fotoMenu = '${data.fotoMenu}' WHERE idRestoran = '${req.user.id}'`, (err, result, field) => {
+                      if (err) {
+                        return res.status(500).json({ error: err });
+                      }
+                    });
+                  });
+                } else if (data.qrchatbot != null && data.qrchatbot !== "") {
+                  fs.unlink(`image/${data.qrchatbot}`, (err) => {
+                    if (err) return res.status(400).json({ error: err });
+                    con.query(`UPDATE tbrestoran SET qrchatbot = '${data.qrchatbot}' WHERE idRestoran = '${req.user.id}'`, (err, result, field) => {
+                      if (err) {
+                        return res.status(500).json({ error: err });
+                      }
+                    });
+                  });
+                }
+              });
+              // delete akun restoran
+              con.query(`DELETE FROM tbrestoran WHERE idRestoran = ${data.idRestoran}`, (err, result, field) => {
+                if (err) {
+                  return res.status(500).json({ error: err });
+                } else {
+                  return res.status(200).json({
+                    data: {
+                      message: "Delete akun success",
+                    },
+                  });
+                }
+              });
+            });
+          });
+        });
+      } else {
+        return res.status(400).json({
+          error: {
+            password: "Password salah",
+          },
+        });
+      }
+    });
+  }
+});
 
 module.exports = router;

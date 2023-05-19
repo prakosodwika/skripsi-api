@@ -233,6 +233,26 @@ ValidateCancelTransaksi = (data) => {
   };
 };
 
+ValidateLinkToQr = (data) => {
+  let _errors = {};
+  if (!isNumber(data.idRestoran)) _errors.idRestoran = "Id tidak kosong & angka";
+  if (isEmpty(data.link)) _errors.link = "link tidak boleh kosong";
+  return {
+    _errors,
+    valid: Object.keys(_errors).length === 0 ? true : false,
+  };
+};
+
+ValidateDeleteAkun = (data) => {
+  let _errors = {};
+  if (!isNumber(data.idRestoran)) _errors.idRestoran = "Id tidak kosong & angka";
+  if (isEmpty(data.password)) _errors.password = "Password tidak boleh kosong";
+  return {
+    _errors,
+    valid: Object.keys(_errors).length === 0 ? true : false,
+  };
+};
+
 module.exports = {
   ValidateLogin,
   ValidateRegistrasi,
@@ -254,4 +274,6 @@ module.exports = {
   ValidateUpdatePatternsResponse,
   ValidatePesanan,
   ValidateCancelTransaksi,
+  ValidateLinkToQr,
+  ValidateDeleteAkun,
 };

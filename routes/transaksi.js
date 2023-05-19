@@ -143,6 +143,27 @@ router.post("/editPesanan", (req, res) => {
   });
 });
 
+router.post("/postStatus", authToken, (req, res) => {
+  const data = {
+    id: req.body.idTransaksi,
+    status: "lunas",
+  };
+  const { valid, _errors } = ValidateStatus(data);
+  if (!valid) return res.status(400).json({ error: _errors });
+
+  con.query(`UPDATE tbtransaksi SET status = '${data.status}' , tanggalBayar = '${new Date().toISOString().slice(0, 19).replace("T", " ")}' WHERE idTransaksi = ${data.id}`, (err, result, field) => {
+    if (err) {
+      return res.status(500).json({ error: err });
+    } else {
+      return res.status(200).json({
+        data: {
+          message: "Update status success ",
+        },
+      });
+    }
+  });
+});
+
 // post pesanan
 router.post("/pesan", (req, res) => {
   const data = {
@@ -272,4 +293,5 @@ router.post("/cancel", (req, res) => {
     }
   });
 });
+
 module.exports = router;

@@ -145,7 +145,7 @@ router.get("/getDetailTag", authToken, (req, res) => {
 });
 
 // get intents by idRestoran
-router.get("/intents", (req, res) => {
+router.post("/intents", (req, res) => {
   const data = {
     id: req.body.idRestoran,
   };

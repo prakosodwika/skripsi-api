@@ -1,18 +1,38 @@
 const express = require("express");
 const router = express.Router();
+const con = require("../util/config");
 var qrCode = require("qrcode");
+const authToken = require("../util/authToken");
+const { ValidateLinkToQr } = require("../util/validators");
 
-router.get("/", (req, res) => {
-  let data = "https://www.youtube.com/watch?v=zSPasbw4A4s";
+router.post("/", authToken, (req, res) => {
+  // const location = ""
+  let data = {
+    idRestoran: req.body.idRestoran,
+    link: req.body.telegramLink,
+    image: "image" + "-" + Date.now() + ".png",
+  };
   // let stJson = JSON.stringify(data);
   // console.log(stJson);
-  qrCode.toString(data, { type: "terminal" }, (err, code) => {
+  const { valid, _errors } = ValidateLinkToQr(data);
+  if (!valid) return res.status(400).json({ error: _errors });
+  qrCode.toFile(`image/${data.image}`, data.link, { type: "terminal" }, (err, code) => {
     if (err) {
       console.log("error : ", err);
       res.status(500).json({ error: err });
     } else {
-      console.log(code);
-      return res.status(200).json({ message: "success" });
+      con.query(`UPDATE tbrestoran SET qrchatbot = "${data.image}", tanggalUbah = '${new Date().toISOString().slice(0, 19).replace("T", " ")}'WHERE idRestoran = ${data.idRestoran}`, (err, result, field) => {
+        if (err) {
+          console.log("error : ", err);
+          return res.status(500).json({ error: err });
+        } else {
+          return res.status(200).json({
+            data: {
+              message: "Upload image success",
+            },
+          });
+        }
+      });
     }
   });
 });
