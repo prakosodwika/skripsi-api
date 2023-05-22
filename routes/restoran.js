@@ -17,8 +17,6 @@ router.post("/registrasi", (req, res) => {
     password: req.body.password,
     konfirmasiPassword: req.body.konfirmasiPassword,
     status: "belum terverifikasi",
-    tanggalBuat: new Date().toISOString().slice(0, 19).replace("T", " "),
-    tanggalUbah: new Date().toISOString().slice(0, 19).replace("T", " "),
     jumlahMeja: req.body.jumlahMeja,
   };
 
@@ -28,7 +26,7 @@ router.post("/registrasi", (req, res) => {
 
   con.query(
     `INSERT INTO tbrestoran (nama, email, nomorTelepon, alamat, password, status, tanggalBuat, tanggalUbah, jumlahMeja)
-    VALUES ('${data.nama}', '${data.email}', '${data.nomorTelepon}', '${data.alamat}', '${hashedPassword}', '${data.status}', now(), '${data.tanggalUbah}', '${data.jumlahMeja}')`,
+    VALUES ('${data.nama}', '${data.email}', '${data.nomorTelepon}', '${data.alamat}', '${hashedPassword}', '${data.status}', now(), now(), '${data.jumlahMeja}')`,
     (err, result, field) => {
       if (err) {
         console.log("error : ", err);
@@ -149,7 +147,6 @@ router.post("/updateRestoranByIdToken", authToken, (req, res) => {
     email: req.body.email,
     alamat: req.body.alamat,
     nomorTelepon: req.body.nomorTelepon,
-    tanggalUbah: new Date().toISOString().slice(0, 19).replace("T", " "),
     jumlahMeja: req.body.jumlahMeja,
   };
   const { valid, _errors } = ValidateUpdateRestoranByIdToken(data);
@@ -158,7 +155,7 @@ router.post("/updateRestoranByIdToken", authToken, (req, res) => {
     return res.status(403).json({ error: "Unauthorized" });
   } else {
     con.query(
-      `UPDATE tbrestoran SET nama='${data.nama}', email='${data.email}', alamat='${data.alamat}', nomorTelepon='${data.nomorTelepon}' , tanggalUbah='${data.tanggalUbah}', jumlahMeja='${data.jumlahMeja}' WHERE idRestoran='${req.user.id}';`,
+      `UPDATE tbrestoran SET nama='${data.nama}', email='${data.email}', alamat='${data.alamat}', nomorTelepon='${data.nomorTelepon}' , tanggalUbah= now() , jumlahMeja='${data.jumlahMeja}' WHERE idRestoran='${req.user.id}';`,
       (err, result, field) => {
         if (err) {
           console.log("error : ", err);

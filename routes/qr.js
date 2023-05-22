@@ -21,7 +21,7 @@ router.post("/", authToken, (req, res) => {
       console.log("error : ", err);
       res.status(500).json({ error: err });
     } else {
-      con.query(`UPDATE tbrestoran SET qrchatbot = "${data.image}", tanggalUbah = '${new Date().toISOString().slice(0, 19).replace("T", " ")}'WHERE idRestoran = ${data.idRestoran}`, (err, result, field) => {
+      con.query(`UPDATE tbrestoran SET qrchatbot = "${data.image}", tanggalUbah = now() WHERE idRestoran = ${data.idRestoran}`, (err, result, field) => {
         if (err) {
           console.log("error : ", err);
           return res.status(500).json({ error: err });

@@ -10,9 +10,6 @@ router.post("/postMenuRestoranByIdToken", authToken, (req, res) => {
     nama: req.body.nama,
     tipe: req.body.tipe,
     harga: req.body.harga,
-    // jam salah ??
-    tanggalBuat: new Date().toISOString().slice(0, 19).replace("T", " "),
-    tanggalUbah: new Date().toISOString().slice(0, 19).replace("T", " "),
     idRestoran: req.user.id,
   };
   const { valid, _errors } = ValidatePostMenuRestoranByIdToken(data);
@@ -21,7 +18,7 @@ router.post("/postMenuRestoranByIdToken", authToken, (req, res) => {
     return res.status(403).json({ error: "Unauthorized" });
   } else {
     con.query(
-      `INSERT INTO tbmenu (nama, tipe, harga, tanggalBuat, tanggalUbah, idRestoran) VALUES ('${data.nama}', '${data.tipe}', '${data.harga}', '${data.tanggalBuat}', '${data.tanggalUbah}', '${data.idRestoran}')
+      `INSERT INTO tbmenu (nama, tipe, harga, tanggalBuat, tanggalUbah, idRestoran) VALUES ('${data.nama}', '${data.tipe}', '${data.harga}', now(), now(), '${data.idRestoran}')
       `,
       (err, result, field) => {
         if (err) {
@@ -45,7 +42,6 @@ router.post("/updateMenuRestoranByIdToken", authToken, (req, res) => {
     nama: req.body.nama,
     tipe: req.body.tipe,
     harga: req.body.harga,
-    tanggalUbah: new Date().toISOString().slice(0, 19).replace("T", " "),
     idRestoran: req.user.id,
     idMenu: req.body.idMenu,
   };
@@ -62,7 +58,7 @@ router.post("/updateMenuRestoranByIdToken", authToken, (req, res) => {
         // console.log("error : ", err);
         return res.status(404).json({ error: "data not found" });
       } else {
-        con.query(`UPDATE tbmenu SET nama="${data.nama}", tipe = "${data.tipe}", harga = "${data.harga}", tanggalUbah = "${data.tanggalUbah}" WHERE idMenu = "${data.idMenu}"`, (err, result, field) => {
+        con.query(`UPDATE tbmenu SET nama="${data.nama}", tipe = "${data.tipe}", harga = "${data.harga}", tanggalUbah = now() WHERE idMenu = "${data.idMenu}"`, (err, result, field) => {
           if (err) {
             console.log("error : ", err);
             return res.status(500).json({ error: err });

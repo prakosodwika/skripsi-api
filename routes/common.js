@@ -31,7 +31,7 @@ var upload = multer({
 }).single("image");
 
 const post = (file, lokasi, id, res) => {
-  con.query(`UPDATE tbrestoran SET ${lokasi} = "${file}", tanggalUbah = '${new Date().toISOString().slice(0, 19).replace("T", " ")}'WHERE idRestoran = ${id}`, (err, result, field) => {
+  con.query(`UPDATE tbrestoran SET ${lokasi} = "${file}", tanggalUbah = now() WHERE idRestoran = ${id}`, (err, result, field) => {
     if (err) {
       console.log("error : ", err);
       return res.status(500).json({ error: err });

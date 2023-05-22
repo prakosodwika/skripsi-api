@@ -60,7 +60,6 @@ router.post("/postTransaksi", (req, res) => {
   const data = {
     username: req.body.username,
     nomorMeja: req.body.nomorMeja,
-    tanggalBuat: new Date().toISOString().slice(0, 19).replace("T", " "),
     status: "belum bayar",
     idRestoran: req.body.idRestoran,
   };
@@ -68,7 +67,7 @@ router.post("/postTransaksi", (req, res) => {
   if (!valid) {
     return res.status(400).json({ error: _errors });
   } else {
-    con.query(`INSERT INTO tbtransaksi (username, nomorMeja, tanggalBuat, status, idRestoran) VALUES ('${data.username}','${data.nomorMeja}', '${data.tanggalBuat}', '${data.status}','${data.idRestoran}')`, (err, result, field) => {
+    con.query(`INSERT INTO tbtransaksi (username, nomorMeja, tanggalBuat, status, idRestoran) VALUES ('${data.username}','${data.nomorMeja}', now() , '${data.status}','${data.idRestoran}')`, (err, result, field) => {
       if (err) {
         return res.status(500).json({ error: err });
       }
@@ -151,7 +150,7 @@ router.post("/postStatus", authToken, (req, res) => {
   const { valid, _errors } = ValidateStatus(data);
   if (!valid) return res.status(400).json({ error: _errors });
 
-  con.query(`UPDATE tbtransaksi SET status = '${data.status}' , tanggalBayar = '${new Date().toISOString().slice(0, 19).replace("T", " ")}' WHERE idTransaksi = ${data.id}`, (err, result, field) => {
+  con.query(`UPDATE tbtransaksi SET status = '${data.status}' , tanggalBayar = now() WHERE idTransaksi = ${data.id}`, (err, result, field) => {
     if (err) {
       return res.status(500).json({ error: err });
     } else {
@@ -169,7 +168,6 @@ router.post("/pesan", (req, res) => {
   const data = {
     username: req.body.username,
     nomorMeja: req.body.nomorMeja,
-    tanggalBuat: new Date().toISOString().slice(0, 19).replace("T", " "),
     status: "belum bayar",
     namaRestoran: req.body.namaRestoran,
     pesanan: req.body.pesanan,
@@ -210,7 +208,7 @@ router.post("/pesan", (req, res) => {
             detailPesanan.push(Object.values(menu));
           });
           // insert and get idTransaksi
-          con.query(`INSERT INTO tbtransaksi (username, nomorMeja, tanggalBuat, status, idRestoran) VALUES ('${data.username}','${data.nomorMeja}', '${data.tanggalBuat}', '${data.status}','${idRestoran}')`, (err, result, field) => {
+          con.query(`INSERT INTO tbtransaksi (username, nomorMeja, tanggalBuat, status, idRestoran) VALUES ('${data.username}','${data.nomorMeja}', now(), '${data.status}','${idRestoran}')`, (err, result, field) => {
             if (err) {
               return res.status(500).json({ error: err });
             } else {
