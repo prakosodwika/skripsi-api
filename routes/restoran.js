@@ -28,7 +28,7 @@ router.post("/registrasi", (req, res) => {
 
   con.query(
     `INSERT INTO tbrestoran (nama, email, nomorTelepon, alamat, password, status, tanggalBuat, tanggalUbah, jumlahMeja)
-    VALUES ('${data.nama}', '${data.email}', '${data.nomorTelepon}', '${data.alamat}', '${hashedPassword}', '${data.status}', '${data.tanggalBuat}', '${data.tanggalUbah}', '${data.jumlahMeja}')`,
+    VALUES ('${data.nama}', '${data.email}', '${data.nomorTelepon}', '${data.alamat}', '${hashedPassword}', '${data.status}', now(), '${data.tanggalUbah}', '${data.jumlahMeja}')`,
     (err, result, field) => {
       if (err) {
         console.log("error : ", err);
