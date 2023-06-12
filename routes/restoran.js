@@ -37,6 +37,8 @@ router.post("/registrasi", (req, res) => {
           } else {
             return res.status(400).json({ error: "Email telah digunakan" });
           }
+        } else if (err.code === "ER_PARSE_ERROR") {
+          return res.status(400).json({ error: "'/` tidak diperbolehkan" });
         } else if (err.code === "ER_DATA_TOO_LONG") {
           return res.status(400).json({ error: "Alamat terlalu panjang" });
         }
@@ -307,7 +309,8 @@ router.post("/delete", authToken, (req, res) => {
                       }
                     });
                   });
-                } else if (data.qrchatbot != null && data.qrchatbot !== "") {
+                }
+                if (data.qrchatbot != null && data.qrchatbot !== "") {
                   fs.unlink(`image/${data.qrchatbot}`, (err) => {
                     if (err) return res.status(400).json({ error: err });
                     con.query(`UPDATE tbrestoran SET qrchatbot = '${data.qrchatbot}' WHERE idRestoran = '${req.user.id}'`, (err, result, field) => {
