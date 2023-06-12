@@ -6,6 +6,7 @@ const authToken = require("../util/authToken");
 const fs = require("fs");
 const { HashPassword, DecryptPassword } = require("../util/hash");
 const { ValidateLogin, ValidateRegistrasi, ValidateUpdateRestoranByIdToken, ValidateId, ValidateUpdatePasswordByIdToken, ValidateStatus, ValidateDeleteAkun } = require("../util/validators");
+const { restart } = require("nodemon");
 
 // registrasi done
 router.post("/registrasi", (req, res) => {
@@ -345,6 +346,16 @@ router.post("/delete", authToken, (req, res) => {
       }
     });
   }
+});
+
+router.post("/jumlahMeja", (req, res) => {
+  con.query(`select jumlahMeja from tbrestoran where idRestoran = ${req.body.idRestoran}`, (err, result, field) => {
+    if (err) {
+      console.log("error : ", err);
+      return res.status(500).json({ error: err });
+    }
+    return res.status(200).json({ data: result });
+  });
 });
 
 module.exports = router;
