@@ -1,0 +1,81 @@
+{
+    "intents": [
+        {
+            "tag": "greetings",
+            "patterns": [
+                "halo",
+                "hai",
+                "helo",
+                "hi",
+                "hy",
+                "hay",
+                "hallo",
+                "hello"
+            ],
+            "response": [
+                "Halo juga! Mau pesan apa?",
+                "Hai! Mau pesan apa?"
+            ]
+        },
+        {
+            "tag": "pesan",
+            "patterns": [
+                "pesan",
+                "pesen",
+                "mesen"
+            ],
+            "response": [
+                "Oke, untuk pemesanan bisa tekan tombol /pesan ini ya! Jangan lupa cek /menu disini ya.",
+                "Baik kak, bisa tekan tombol /pesan ini yaa. Jangan lupa lihat menu dulu di tombol /menu ini yaa"
+            ]
+        },
+        {
+            "tag": "gambar menu",
+            "patterns": [
+                "menu",
+                "lihat",
+                "liat"
+            ],
+            "response": [
+                "Kalau mau lihat menu bisa tekan di tombol /menu ini ya",
+                "Baik kak, bisa dengan tekan tombol /menu ini ya kak"
+            ]
+        },
+        {
+            "tag": "pembayaran",
+            "patterns": [
+                "bayar"
+            ],
+            "response": [
+                "Oke, kalau mau bayar bisa langsung ke kasir ya",
+                "Baik kak, untuk pembayaran bisa langsung ke kasir ya"
+            ]
+        },
+        {
+            "tag": "goodbye",
+            "patterns": [
+                "terimakasih",
+                "terima",
+                "kasih",
+                "bye",
+                "dadah"
+            ],
+            "response": [
+                "Terima kasih, sampai jumpa lagi ya kak",
+                "Terima kasih kak, sampai jumpa"
+            ]
+        },
+        {
+            "tag": "menu",
+            "patterns": [
+                "nasi goreng",
+                "mie goreng",
+                "mie rebus",
+                "pempek"
+            ],
+            "response": [
+                "menu tersebut ada ya kak"
+            ]
+        }
+    ]
+}

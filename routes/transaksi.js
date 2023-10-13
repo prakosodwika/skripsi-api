@@ -26,7 +26,7 @@ router.post("/getDetailTransaksi", (req, res) => {
   const { valid, _errors } = ValidateId(data);
   if (!valid) return res.status(400).json({ error: _errors });
   let total = 0;
-  con.query(`SELECT m.idMenu, m.nama, dt.qty, dt.harga, dt.qty*dt.harga as subHarga  FROM tbdetailtransaksi dt JOIN tbmenu m ON dt.idMenu = m.idMenu WHERE idTransaksi = "${data.id}";`, (err, result, field) => {
+  con.query(`SELECT dt.idDetailTransaksi, m.idMenu, m.nama, dt.qty, dt.harga, dt.qty*dt.harga as subHarga  FROM tbdetailtransaksi dt JOIN tbmenu m ON dt.idMenu = m.idMenu WHERE idTransaksi = "${data.id}";`, (err, result, field) => {
     if (err) {
       return res.status(500).json({ error: err });
     }
@@ -141,6 +141,23 @@ router.post("/editPesanan", (req, res) => {
     }
   });
 });
+
+router.post("/deleteDetailPesanan", (req, res) => {
+  const data = {
+    id : req.body.idDetailTransaksi
+  }
+  const {valid, _errors} = ValidateId(data)
+  if (!valid) return res.status(400).json({ error: _errors });
+  con.query(`DELETE FROM tbdetailtransaksi WHERE idDetailTransaksi = ${data.id};`, (err, result, field) => {
+    if (err){
+      return res.status(500).json({error: err})
+    } else if (result.affectedRows == 0) {
+      return res.status(404).json({ error: "data not found" });
+    } else {
+      return res.status(200).json({ data: { message: `Delete idDetailTransaksi ${data.id} success` } });
+    }
+  })
+})
 
 router.post("/postStatus", authToken, (req, res) => {
   const data = {
