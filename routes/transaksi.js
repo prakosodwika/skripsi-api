@@ -43,7 +43,7 @@ router.get("/getTransaksi", authToken, (req, res) => {
   if (req.user.role != "operator") {
     return res.status(403).json({ error: "Unauthorized" });
   } else {
-    con.query(`SELECT * FROM tbtransaksi WHERE idRestoran = ${req.user.id}`, (err, result, field) => {
+    con.query(`SELECT * FROM tbtransaksi WHERE idRestoran = ${req.user.id} ORDER BY tanggalBuat DESC `, (err, result, field) => {
       if (err) {
         console.log("error : ", err);
         return res.status(500).json({ error: err });
