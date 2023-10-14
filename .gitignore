@@ -1,0 +1,7 @@
+image/
+/image
+node_modules/
+.env
+/node_modules
+package-lock.json
+sandbox.js
