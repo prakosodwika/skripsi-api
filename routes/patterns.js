@@ -151,7 +151,19 @@ router.post("/intents", (req, res) => {
   };
   const { valid, _errors } = ValidateId(data);
   if (!valid) return res.status(400).json({ error: _errors });
-  let intents = [];
+  let intents = [
+    // ini langsung error fix
+    // {
+    //   tag: 'error',
+    //   patterns: [
+    //     'gatau'
+    //   ],
+    //   response_error: [
+    //     'maaf',
+    //     'ini error'
+    //   ]
+    // }
+  ];
   con.query(`SELECT * FROM tbpatterns `, (err, result, field) => {
     if (err) {
       return res.status(500).json({ error: err });
@@ -196,7 +208,7 @@ router.post("/intents", (req, res) => {
         intents.push({
           tag: "menu",
           patterns: namaMenu,
-          response: ["menu tersebut ada ya kak"],
+          response: ["Menu itu ada ya kak. Silahkan dipesan"],
         });
         return res.status(200).json({ intents });
       });

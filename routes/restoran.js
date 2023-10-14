@@ -233,8 +233,8 @@ router.post("/ubahPassword", authToken, (req, res) => {
   }
 });
 
-// belom di tes walibin
-router.get("/image", (req, res) => {
+// udah di tes walibin
+router.post("/image", (req, res) => {
   const data = {
     id: req.body.idRestoran,
   };
@@ -248,7 +248,7 @@ router.get("/image", (req, res) => {
       } else if (result.length == 0) {
         return res.status(404).json({ error: "data not found" });
       } else {
-        return res.status(200).json({ data: "../../../skripsi-api/image/" + result[0].fotoMenu });
+        return res.status(200).json({ data: result[0].fotoMenu });
       }
     });
   }
